@@ -51,7 +51,8 @@
       display: flex;
       flex-direction: column;
       gap: 6px;
-      min-width: 160px;
+      min-width: 200px;
+      max-height: 85vh;
     }
     #jump-panel .panel-title {
       font-size: 11px;
@@ -61,7 +62,60 @@
       text-transform: uppercase;
       margin-bottom: 2px;
     }
-    #jump-panel button {
+
+    /* ── FILTER & SORT UI ── */
+    .controls-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 6px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    .panel-select {
+      width: 100%;
+      padding: 6px 8px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-size: 12px;
+      font-family: inherit;
+      outline: none;
+      cursor: pointer;
+    }
+    .panel-select:focus {
+      border-color: var(--accent2);
+    }
+    .sort-btn {
+      width: 100%;
+      padding: 6px 8px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-muted);
+      font-size: 11px;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.15s;
+    }
+    .sort-btn.active {
+      background: var(--surface2);
+      border-color: var(--accent2);
+      color: var(--accent2);
+    }
+
+    /* ボタンコンテナ (スクロール対応) */
+    #button-container {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      overflow-y: auto;
+      max-height: 50vh;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+    }
+    #button-container button {
       padding: 6px 10px;
       border: 1px solid var(--border);
       border-radius: 6px;
@@ -72,9 +126,10 @@
       font-family: inherit;
       text-align: left;
       transition: background .15s, border-color .15s;
+      flex-shrink: 0;
     }
-    #jump-panel button:hover,
-    #jump-panel button.active {
+    #button-container button:hover,
+    #button-container button.active {
       background: var(--surface2);
       border-color: var(--accent);
       color: var(--accent);
@@ -301,6 +356,17 @@
   <div id="map"></div>
   <div id="jump-panel">
     <div class="panel-title">📍 場所にジャンプ</div>
+    <div class="controls-group">
+      <select id="filter-team" class="panel-select">
+        <option value="all">すべての球団</option>
+        <option value="giants">読売ジャイアンツ</option>
+        <option value="hawks">南海ホークス</option>
+        <option value="orix">オリックス</option>
+        <option value="lotte">ロッテ</option>
+      </select>
+      <button id="sort-toggle" class="sort-btn">五十音順に並び替え</button>
+    </div>
+    <div id="button-container"></div>
   </div>
  </div>
  <div id="sidebar">
@@ -314,7 +380,6 @@
     </div>
   </div>
   <div class="sb-content">
-    <!-- 追加：動画再生エリア -->
     <div class="sb-section" id="sb-video-section">
       <div class="sb-section-title">ハイライト動画</div>
       <div class="sb-video-container" id="sb-video-container"></div>
@@ -336,13 +401,15 @@
  </div>
  <script src="https://unpkg.com/maplibre-gl@5.3.0/dist/maplibre-gl.js"></script>
  <script>
+// データ拡張：team (絞り込み用) と kana (並び替え用) を追加
 const locations = [
   {
+    id: "nagashima", team: "giants", kana: "ながしましげお",
     lng: 140.18633007445197, lat: 35.73409669663595,
     name: "長嶋茂雄", icon: "⚾️", color: "#9b59b6", zoom: 12,
     number: "背番号 3",
     sub: "千葉県佐倉市出身 / 内野手（三塁手）",
-    youtubeId: "ovRFqlFaXWY", // 各選手にYouTubeの動画IDを設定
+    youtubeId: "ovRFqlFaXWY",
     image: [
       "https://th.bing.com/th?id=OIF.L%2bh9cSpVdS3m1V%2fw2IjGFw&rs=1&pid=ImgDetMain&o=7&rm=3"
     ],
@@ -367,6 +434,7 @@ const locations = [
     bestRow: 1,
   },
   {
+    id: "oh", team: "giants", kana: "おうさだはる",
     lng: 139.80180260617564, lat: 35.702992354225316,
     name: "王貞治", icon: "🏰", color: "#34495e", zoom: 10,
     number: "背番号 1",
@@ -396,6 +464,7 @@ const locations = [
     bestRow: 3,
   },
   {
+    id: "nomura", team: "hawks", kana: "のむらかつや",
     lng: 135.03351558247647, lat: 35.68327083719135,
     name: "野村克也", icon: "🍖", color: "#c0392b", zoom: 10,
     number: "背番号 19・73",
@@ -425,6 +494,7 @@ const locations = [
     bestRow: 2,
   },
   {
+    id: "ochiai", team: "lotte", kana: "おちあいひろみつ",
     lng: 139.8560145271857, lat: 39.88909747708703,
     name: "落合博満", icon: "🗼", color: "#e67e22", zoom: 12,
     number: "背番号 6",
@@ -454,6 +524,7 @@ const locations = [
     bestRow: 1,
   },
   {
+    id: "ichiro", team: "orix", kana: "いちろー",
     lng: 136.91171225329936, lat: 35.25040417337579,
     name: "イチロー", icon: "🍜", color: "#27ae60", zoom: 12,
     number: "背番号 51",
@@ -485,7 +556,6 @@ const locations = [
 ];
 
 // ── MAP INITIALIZATION ──
-// キー不要で安定して動作するオープンソースのダークテーマスタイル（国土地理院ベースの背景等にも合わせやすいスタイル）に変更
 const map = new maplibregl.Map({
   container: 'map',
   style: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
@@ -494,12 +564,38 @@ const map = new maplibregl.Map({
 });
 map.addControl(new maplibregl.NavigationControl());
 
+// マーカー要素をスクリプト側で管理するためのオブジェクト
+const markerElements = {};
+
 map.on('load', () => {
-  // 元のコードにあったエラーの起きやすい未認証ソースや海外GeoJSONの追加処理を、動作安定のためクリーンアップしました。
-  // 必要に応じて、ここに有効な日本の市区町村GeoJSONのURLを設定してください。
+  // マーカーを生成して配置（ここは初回のみ実行）
+  locations.forEach(loc => {
+    const el = document.createElement('div');
+    el.className = 'custom-marker';
+    el.style.background = loc.color;
+    el.textContent = loc.icon;
+   
+    new maplibregl.Marker({ element: el })
+      .setLngLat([loc.lng, loc.lat])
+      .addTo(map);
+
+    // マーカークリックで連動
+    el.addEventListener('click', () => {
+      map.flyTo({ center: [loc.lng, loc.lat], zoom: loc.zoom, duration: 1500 });
+      // 対応するリストのボタンを探してアクティブ化
+      const targetBtn = document.querySelector(`button[data-id="${loc.id}"]`);
+      openSidebar(loc, targetBtn, el);
+    });
+
+    // 後からアクセスできるように保存
+    markerElements[loc.id] = el;
+  });
+
+  // 初回リスト描画
+  renderButtons();
 });
 
- // ── SIDEBAR LOGIC ──
+// ── SIDEBAR LOGIC ──
 const sidebar = document.getElementById('sidebar');
 const sbImages = document.getElementById('sb-images');
 const sbNumber = document.getElementById('sb-number');
@@ -515,7 +611,6 @@ let activeBtn = null;
 let activeMarkerEl = null;
  
 function openSidebar(loc, btn, markerEl) {
-  // images
   sbImages.innerHTML = '';
   const imgs = loc.image || [];
   if (imgs.length) {
@@ -534,14 +629,13 @@ function openSidebar(loc, btn, markerEl) {
   sbName.textContent   = loc.name;
   sbSub.textContent    = loc.sub || '';
  
-  // 動画埋め込み処理
   if (loc.youtubeId) {
     sbVideoSection.style.display = 'block';
     sbVideoContainer.innerHTML = `
-      <iframe 
-        src="https://www.youtube-nocookie.com/embed/${loc.youtubeId}?rel=0&showinfo=0" 
+      <iframe
+        src="https://www.youtube-nocookie.com/embed/${loc.youtubeId}?rel=0&showinfo=0"
         title="${loc.name} ハイライト"
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
         allowfullscreen>
       </iframe>`;
   } else {
@@ -549,7 +643,6 @@ function openSidebar(loc, btn, markerEl) {
     sbVideoContainer.innerHTML = '';
   }
 
-  // facts grid
   sbFacts.innerHTML = (loc.facts || []).map(f => `
     <div class="fact-card">
       <div class="fact-label">${f.label}</div>
@@ -559,7 +652,6 @@ function openSidebar(loc, btn, markerEl) {
  
   sbBio.textContent = loc.bio || '';
  
-  // season table
   if (loc.tableHeaders && loc.tableRows) {
     const thead = `<tr>${loc.tableHeaders.map(h => `<th>${h}</th>`).join('')}</tr>`;
     const tbody = loc.tableRows.map((row, i) =>
@@ -575,12 +667,10 @@ function openSidebar(loc, btn, markerEl) {
  
   sidebar.classList.add('open');
  
-  // button highlight
   if (activeBtn) activeBtn.classList.remove('active');
   activeBtn = btn;
   if (btn) btn.classList.add('active');
  
-  // marker highlight
   if (activeMarkerEl) activeMarkerEl.classList.remove('active');
   activeMarkerEl = markerEl;
   if (markerEl) markerEl.classList.add('active');
@@ -588,40 +678,87 @@ function openSidebar(loc, btn, markerEl) {
  
 document.getElementById('sidebar-close').addEventListener('click', () => {
   sidebar.classList.remove('open');
-  sbVideoContainer.innerHTML = ''; // サイドバーを閉じたら動画を停止させる
+  sbVideoContainer.innerHTML = '';
   if (activeBtn) activeBtn.classList.remove('active');
   if (activeMarkerEl) activeMarkerEl.classList.remove('active');
   activeBtn = null;
   activeMarkerEl = null;
 });
 
- // ── BUILD MARKERS + BUTTONS ──
-const panel = document.getElementById('jump-panel');
- 
-locations.forEach(loc => {
-  // marker
-  const el = document.createElement('div');
-  el.className = 'custom-marker';
-  el.style.background = loc.color;
-  el.textContent = loc.icon;
- 
-  new maplibregl.Marker({ element: el })
-    .setLngLat([loc.lng, loc.lat])
-    .addTo(map);
- 
-  // jump button
-  const btn = document.createElement('button');
-  btn.textContent = `${loc.icon} ${loc.name}`;
-  panel.appendChild(btn);
- 
-  // click handlers
-  const handleSelect = () => {
-    map.flyTo({ center: [loc.lng, loc.lat], zoom: loc.zoom, duration: 1500 });
-    openSidebar(loc, btn, el);
-  };
- 
-  el.addEventListener('click', handleSelect);
-  btn.addEventListener('click', handleSelect);
+// ── FILTER & SORT LOGIC ──
+const buttonContainer = document.getElementById('button-container');
+const filterTeamSelect = document.getElementById('filter-team');
+const sortToggleBtn = document.getElementById('sort-toggle');
+
+let isSortedByKana = false; // 現在五十音順かどうか
+
+// ボタン群を動的に再描画する関数
+function renderButtons() {
+  // 現在のフィルター値を取得
+  const selectedTeam = filterTeamSelect.value;
+  
+  // 1. フィルタリング
+  let filteredData = locations.filter(loc => {
+    return selectedTeam === 'all' || loc.team === selectedTeam;
+  });
+
+  // 2. 並び替え
+  if (isSortedByKana) {
+    // 五十音順 (kanaプロパティで比較)
+    filteredData.sort((a, b) => a.kana.localeCompare(b.kana, 'ja'));
+  } else {
+    // デフォルト順 (配列の元の位置を維持するためにIDで元のインデックスを探す)
+    filteredData.sort((a, b) => {
+      return locations.findIndex(x => x.id === a.id) - locations.findIndex(x => x.id === b.id);
+    });
+  }
+
+  // 3. HTMLへの反映
+  buttonContainer.innerHTML = '';
+  
+  if (filteredData.length === 0) {
+    const emptyMsg = document.createElement('div');
+    emptyMsg.style.cssText = 'font-size: 11px; color: var(--text-muted); text-align: center; padding: 10px;';
+    emptyMsg.textContent = '該当する選手がいません';
+    buttonContainer.appendChild(emptyMsg);
+    return;
+  }
+
+  filteredData.forEach(loc => {
+    const btn = document.createElement('button');
+    btn.textContent = `${loc.icon} ${loc.name}`;
+    btn.setAttribute('data-id', loc.id); // 参照用IDを付与
+
+    // サイドバーが既に開いていて、現在表示中の選手であればアクティブ状態にする
+    if (activeBtn && activeBtn.getAttribute('data-id') === loc.id) {
+      btn.className = 'active';
+      activeBtn = btn; // 新しいボタン要素に参照を更新
+    }
+
+    // クリックイベント
+    btn.addEventListener('click', () => {
+      map.flyTo({ center: [loc.lng, loc.lat], zoom: loc.zoom, duration: 1500 });
+      openSidebar(loc, btn, markerElements[loc.id]);
+    });
+
+    buttonContainer.appendChild(btn);
+  });
+}
+
+// 球団フィルターが変更された時
+filterTeamSelect.addEventListener('change', renderButtons);
+
+// 並び替えボタンがクリックされた時
+sortToggleBtn.addEventListener('click', () => {
+  isSortedByKana = !isSortedByKana;
+  if (isSortedByKana) {
+    sortToggleBtn.textContent = 'デフォルト順に戻す';
+    sortToggleBtn.classList.add('active');
+  } else {
+    sortToggleBtn.textContent = '五十音順に並び替え';
+    sortToggleBtn.classList.remove('active');
+  }
+  renderButtons();
 });
  </script>
 </body>
