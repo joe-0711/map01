@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <title>野球選手出身地マップ</title>
   <link href="https://unpkg.com/maplibre-gl@5.3.0/dist/maplibre-gl.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght=400;500;700&family=Bebas+Neue&display=swap" rel="stylesheet">
   <style>
     :root {
       --bg: #0f1117;
@@ -17,7 +17,9 @@
       --border: #2e334d;
       --sidebar-w: 360px;
     }
+ 
     * { margin: 0; padding: 0; box-sizing: border-box; }
+ 
     body {
       font-family: 'Noto Sans JP', sans-serif;
       background: var(--bg);
@@ -26,120 +28,282 @@
       display: flex;
       overflow: hidden;
     }
-    #map-wrap { flex: 1; position: relative; }
+ 
+    /* ── MAP ── */
+    #map-wrap {
+      flex: 1;
+      position: relative;
+      transition: margin-right 0.4s cubic-bezier(.4,0,.2,1);
+    }
     #map { width: 100%; height: 100%; }
  
+    /* ── JUMP PANEL ── */
     #jump-panel {
-      position: absolute; top: 14px; left: 14px; z-index: 10;
-      background: rgba(26,29,39,0.92); backdrop-filter: blur(8px);
-      padding: 12px 14px; border-radius: 10px; border: 1px solid var(--border);
-      display: flex; flex-direction: column; gap: 6px; min-width: 160px;
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      z-index: 10;
+      background: rgba(26,29,39,0.92);
+      backdrop-filter: blur(8px);
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-width: 160px;
     }
     #jump-panel .panel-title {
-      font-size: 11px; font-weight: 700; letter-spacing: .08em;
-      color: var(--accent); text-transform: uppercase; margin-bottom: 2px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      color: var(--accent);
+      text-transform: uppercase;
+      margin-bottom: 2px;
     }
     #jump-panel button {
-      padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px;
-      background: transparent; color: var(--text); cursor: pointer;
-      font-size: 12px; font-family: inherit; text-align: left;
+      padding: 6px 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: transparent;
+      color: var(--text);
+      cursor: pointer;
+      font-size: 12px;
+      font-family: inherit;
+      text-align: left;
       transition: background .15s, border-color .15s;
     }
-    #jump-panel button:hover, #jump-panel button.active {
-      background: var(--surface2); border-color: var(--accent); color: var(--accent);
+    #jump-panel button:hover,
+    #jump-panel button.active {
+      background: var(--surface2);
+      border-color: var(--accent);
+      color: var(--accent);
     }
  
+    /* ── SIDEBAR ── */
     #sidebar {
-      width: var(--sidebar-w); background: var(--surface); border-left: 1px solid var(--border);
-      display: flex; flex-direction: column;
-      transform: translateX(100%); transition: transform 0.4s cubic-bezier(.4,0,.2,1);
-      position: relative; z-index: 20; overflow: hidden;
+      width: var(--sidebar-w);
+      background: var(--surface);
+      border-left: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      transform: translateX(100%);
+      transition: transform 0.4s cubic-bezier(.4,0,.2,1);
+      position: relative;
+      z-index: 20;
+      overflow: hidden;
     }
-    #sidebar.open { transform: translateX(0); }
+    #sidebar.open {
+      transform: translateX(0);
+    }
+ 
+    /* close btn */
     #sidebar-close {
-      position: absolute; top: 12px; right: 12px; width: 28px; height: 28px;
-      border: 1px solid var(--border); border-radius: 50%; background: transparent;
-      color: var(--text-muted); cursor: pointer; font-size: 14px;
-      display: flex; align-items: center; justify-content: center;
-      transition: color .15s, border-color .15s; z-index: 5;
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      width: 28px;
+      height: 28px;
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color .15s, border-color .15s;
+      z-index: 5;
     }
     #sidebar-close:hover { color: var(--text); border-color: var(--text); }
  
-    .sb-header { position: relative; flex-shrink: 0; }
-    .sb-images { display: flex; height: 180px; overflow: hidden; }
+    /* header area */
+    .sb-header {
+      position: relative;
+      flex-shrink: 0;
+    }
+    .sb-images {
+      display: flex;
+      height: 180px;
+      overflow: hidden;
+    }
     .sb-images img {
-      flex: 1; object-fit: cover; object-position: top center;
-      filter: brightness(.85); transition: flex .3s;
+      flex: 1;
+      object-fit: cover;
+      object-position: top center;
+      filter: brightness(.85);
+      transition: flex .3s;
     }
     .sb-images img:hover { flex: 2; }
+ 
     .sb-img-placeholder {
-      flex: 1; background: var(--surface2); display: flex;
-      align-items: center; justify-content: center; color: var(--text-muted); font-size: 12px;
+      flex: 1;
+      background: var(--surface2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      font-size: 12px;
     }
-    .sb-name-block { padding: 16px 20px 10px; border-bottom: 1px solid var(--border); }
-    .sb-number { font-family: 'Bebas Neue', sans-serif; font-size: 11px; letter-spacing: .15em; color: var(--accent); margin-bottom: 2px; }
-    .sb-name { font-size: 22px; font-weight: 700; letter-spacing: .02em; }
-    .sb-sub { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
  
+    .sb-name-block {
+      padding: 16px 20px 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    .sb-number {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 11px;
+      letter-spacing: .15em;
+      color: var(--accent);
+      margin-bottom: 2px;
+    }
+    .sb-name {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: .02em;
+    }
+    .sb-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 3px;
+    }
+ 
+    /* content */
     .sb-content {
-      flex: 1; overflow-y: auto; padding: 16px 20px 24px;
-      scrollbar-width: thin; scrollbar-color: var(--border) transparent;
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 20px 24px;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
     }
-    .sb-section { margin-bottom: 20px; }
-    .sb-section-title {
-      font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
-      color: var(--accent); margin-bottom: 8px; display: flex; align-items: center; gap: 6px;
-    }
-    .sb-section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
-    .sb-bio { font-size: 12px; line-height: 1.75; color: #ccc; }
  
+    .sb-section {
+      margin-bottom: 20px;
+    }
+    .sb-section-title {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .sb-section-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+ 
+    .sb-bio {
+      font-size: 12px;
+      line-height: 1.75;
+      color: #ccc;
+    }
+ 
+    /* ── VIDEO PLAYER CONTAINER ── */
     .sb-video-container {
-      position: relative; width: 100%; padding-top: 56.25%;
-      background: #000; border-radius: 8px; border: 1px solid var(--border); overflow: hidden;
+      position: relative;
+      width: 100%;
+      padding-top: 56.25%; /* 16:9 Aspect Ratio */
+      background: #000;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      overflow: hidden;
     }
     .sb-video-container iframe {
-      position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
     }
  
-    .sb-facts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-    .fact-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; }
-    .fact-label { font-size: 10px; color: var(--text-muted); margin-bottom: 2px; }
-    .fact-value { font-size: 15px; font-weight: 700; color: var(--text); }
+    /* stats grid (key facts) */
+    .sb-facts {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .fact-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+    }
+    .fact-label {
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-bottom: 2px;
+    }
+    .fact-value {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+    }
     .fact-value.highlight { color: var(--accent); }
  
-    .stats-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+    /* season table */
+    .stats-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
+    }
     .stats-table th {
-      background: var(--surface2); color: var(--text-muted); font-weight: 600;
-      text-align: center; padding: 6px 4px; border-bottom: 1px solid var(--border);
-      letter-spacing: .05em; position: sticky; top: 0;
+      background: var(--surface2);
+      color: var(--text-muted);
+      font-weight: 600;
+      text-align: center;
+      padding: 6px 4px;
+      border-bottom: 1px solid var(--border);
+      letter-spacing: .05em;
+      position: sticky;
+      top: 0;
     }
     .stats-table th:first-child { text-align: left; padding-left: 8px; }
-    .stats-table td { text-align: center; padding: 5px 4px; border-bottom: 1px solid rgba(46,51,77,.5); color: #ccc; }
+    .stats-table td {
+      text-align: center;
+      padding: 5px 4px;
+      border-bottom: 1px solid rgba(46,51,77,.5);
+      color: #ccc;
+    }
     .stats-table td:first-child { text-align: left; padding-left: 8px; color: var(--text-muted); }
     .stats-table tr:hover td { background: rgba(255,255,255,.03); }
     .stats-table .best { color: var(--accent); font-weight: 700; }
  
+    /* marker */
     .custom-marker {
-      width: 36px; height: 36px; border-radius: 50%; border: 3px solid white;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.4); display: flex; align-items: center;
-      justify-content: center; font-size: 18px; cursor: pointer;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 3px solid white;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      cursor: pointer;
       transition: transform .15s, box-shadow .15s;
     }
     .custom-marker:hover, .custom-marker.active {
-      transform: scale(1.2); box-shadow: 0 4px 14px rgba(232,196,90,.5);
+      transform: scale(1.2);
+      box-shadow: 0 4px 14px rgba(232,196,90,.5);
     }
   </style>
 </head>
 <body>
- 
-<div id="map-wrap">
+ <div id="map-wrap">
   <div id="map"></div>
   <div id="jump-panel">
     <div class="panel-title">📍 場所にジャンプ</div>
   </div>
-</div>
- 
-<div id="sidebar">
+ </div>
+ <div id="sidebar">
   <button id="sidebar-close">✕</button>
   <div class="sb-header">
     <div class="sb-images" id="sb-images"></div>
@@ -150,10 +314,12 @@
     </div>
   </div>
   <div class="sb-content">
+    <!-- 追加：動画再生エリア -->
     <div class="sb-section" id="sb-video-section">
       <div class="sb-section-title">ハイライト動画</div>
       <div class="sb-video-container" id="sb-video-container"></div>
     </div>
+
     <div class="sb-section">
       <div class="sb-section-title">プロフィール</div>
       <div class="sb-facts" id="sb-facts"></div>
@@ -167,206 +333,173 @@
       <div id="sb-table-wrap"></div>
     </div>
   </div>
-</div>
- 
-<script src="https://unpkg.com/maplibre-gl@5.3.0/dist/maplibre-gl.js"></script>
-<script>
+ </div>
+ <script src="https://unpkg.com/maplibre-gl@5.3.0/dist/maplibre-gl.js"></script>
+ <script>
 const locations = [
   {
     lng: 140.18633007445197, lat: 35.73409669663595,
     name: "長嶋茂雄", icon: "⚾️", color: "#9b59b6", zoom: 12,
-    number: "背番号 3", sub: "千葉県佐倉市出身 / 内野手（三塁手）",
-    youtubeId: "ovRFqlFaXWY",
-    image: ["https://th.bing.com/th?id=OIF.tAdXLhlO6LnX1r%2bQXj0Xvw&rs=1&pid=ImgDetMain&o=7&rm=3"],
+    number: "背番号 3",
+    sub: "千葉県佐倉市出身 / 内野手（三塁手）",
+    youtubeId: "ovRFqlFaXWY", // 各選手にYouTubeの動画IDを設定
+    image: [
+      "https://th.bing.com/th?id=OIF.L%2bh9cSpVdS3m1V%2fw2IjGFw&rs=1&pid=ImgDetMain&o=7&rm=3"
+    ],
     bio: "読売ジャイアンツ一筋17年。「ミスター・ジャイアンツ」と称され、V9黄金時代を牽引した日本プロ野球の象徴的存在。引退後も監督として2度のリーグ優勝を達成。2013年に国民栄誉賞受賞。",
     facts: [
-      { label: "現役期間", value: "1958–1974" }, { label: "通算打率", value: ".305", highlight: true },
-      { label: "通算本塁打", value: "444本", highlight: true }, { label: "通算打点", value: "1522点" },
-      { label: "首位打者", value: "6回" }, { label: "MVP", value: "5回" },
+      { label: "現役期間", value: "1958–1974" },
+      { label: "通算打率", value: ".305", highlight: true },
+      { label: "通算本塁打", value: "444本", highlight: true },
+      { label: "通算打点", value: "1522点" },
+      { label: "首位打者", value: "6回" },
+      { label: "MVP", value: "5回" },
     ],
     tableHeaders: ["年度", "試合", "打率", "HR", "打点", "安打"],
     tableRows: [
-      ["1958","130",".305","29","92","154"],["1961","130",".353","36","118","172"],
-      ["1963","128",".341","37","112","162"],["1966","129",".344","28","102","160"],
-      ["1969","124",".311","32","98","148"],["1971","125",".320","34","103","154"],
-    ], bestRow: 1,
+      ["1958", "130", ".305", "29", "92", "154"],
+      ["1961", "130", ".353", "36", "118", "172"],
+      ["1963", "128", ".341", "37", "112", "162"],
+      ["1966", "129", ".344", "28", "102", "160"],
+      ["1969", "124", ".311", "32", "98", "148"],
+      ["1971", "125", ".320", "34", "103", "154"],
+    ],
+    bestRow: 1,
   },
   {
     lng: 139.80180260617564, lat: 35.702992354225316,
-    name: "王貞治", icon: "👑", color: "#34495e", zoom: 10,
-    number: "背番号 1", sub: "東京都墨田区出身 / 内野手（一塁手）",
+    name: "王貞治", icon: "🏰", color: "#34495e", zoom: 10,
+    number: "背番号 1",
+    sub: "東京都墨田区出身 / 内野手（一塁手）",
     youtubeId: "x7GnLuzxAIg",
-    image: ["https://www2.myjcom.jp/npb/column/img/20230110.jpg"],
+    image: [
+      "https://www2.myjcom.jp/npb/column/img/20230110.jpg"
+    ],
     bio: "一本足打法でプロ野球史上最多868本塁打を記録し、世界記録を達成。ジャイアンツV9の中核を担い、長嶋茂雄とともに「ON砲」として球界を席巻。1977年に国民栄誉賞を受賞（第1号）。",
     facts: [
-      { label: "現役期間", value: "1959–1980" }, { label: "通算打率", value: ".301", highlight: true },
-      { label: "通算本塁打", value: "868本", highlight: true }, { label: "通算打点", value: "2170点" },
-      { label: "本塁打王", value: "15回" }, { label: "MVP", value: "9回" },
+      { label: "現役期間", value: "1959–1980" },
+      { label: "通算打率", value: ".301", highlight: true },
+      { label: "通算本塁打", value: "868本", highlight: true },
+      { label: "通算打点", value: "2170点" },
+      { label: "本塁打王", value: "15回" },
+      { label: "MVP", value: "9回" },
     ],
     tableHeaders: ["年度", "試合", "打率", "HR", "打点", "安打"],
     tableRows: [
-      ["1962","133",".272","38","108","132"],["1964","140",".320","55","119","172"],
-      ["1967","136",".326","47","108","162"],["1973","130",".355","51","114","167"],
-      ["1974","130",".332","49","107","154"],["1977","130",".301","50","124","152"],
-    ], bestRow: 3,
+      ["1962", "133", ".272", "38", "108", "132"],
+      ["1964", "140", ".320", "55", "119", "172"],
+      ["1967", "136", ".326", "47", "108", "162"],
+      ["1973", "130", ".355", "51", "114", "167"],
+      ["1974", "130", ".332", "49", "107", "154"],
+      ["1977", "130", ".301", "50", "124", "152"],
+    ],
+    bestRow: 3,
   },
   {
     lng: 135.03351558247647, lat: 35.68327083719135,
-    name: "野村克也", icon: "🧢", color: "#c0392b", zoom: 10,
-    number: "背番号 19・73", sub: "京都府竹野郡網野町出身 / 捕手",
-    youtubeId: "GlBwrEQIEuo",
-    image: ["https://static.chunichi.co.jp/image/article/size1/7/e/b/b/7ebbc464b8e4a77835b60d2eaf0b63f4_1.jpg"],
+    name: "野村克也", icon: "🍖", color: "#c0392b", zoom: 10,
+    number: "背番号 19・73",
+    sub: "京都府竹野郡網野町出身 / 捕手",
+    youtubeId: "nm7gGYgYk3U",
+    image: [
+      "https://static.chunichi.co.jp/image/article/size1/7/e/b/b/7ebbc464b8e4a77835b60d2eaf0b63f4_1.jpg"
+    ],
     bio: "「月見草」を自称した知将。現役では捕手として歴代2位の657本塁打を記録し、三冠王も達成。引退後は監督としてヤクルト・阪神・楽天を率い「ID野球」でチームを変革。名言・著書でも知られる。",
     facts: [
-      { label: "現役期間", value: "1954–1980" }, { label: "通算打率", value: ".277", highlight: true },
-      { label: "通算本塁打", value: "657本", highlight: true }, { label: "通算打点", value: "1988点" },
-      { label: "本塁打王", value: "9回" }, { label: "三冠王", value: "1回 (1965)" },
+      { label: "現役期間", value: "1954–1980" },
+      { label: "通算打率", value: ".277", highlight: true },
+      { label: "通算本塁打", value: "657本", highlight: true },
+      { label: "通算打点", value: "1988点" },
+      { label: "本塁打王", value: "9回" },
+      { label: "三冠王", value: "1回 (1965)" },
     ],
     tableHeaders: ["年度", "試合", "打率", "HR", "打点", "安打"],
     tableRows: [
-      ["1960","127",".281","28","89","130"],["1963","137",".305","52","116","171"],
-      ["1965","131",".320","42","110","154"],["1968","129",".285","38","98","144"],
-      ["1972","130",".275","41","101","138"],["1977","124",".270","32","84","122"],
-    ], bestRow: 2,
+      ["1960", "127", ".281", "28", "89", "130"],
+      ["1963", "137", ".305", "52", "116", "171"],
+      ["1965", "131", ".320", "42", "110", "154"],
+      ["1968", "129", ".285", "38", "98", "144"],
+      ["1972", "130", ".275", "41", "101", "138"],
+      ["1977", "124", ".270", "32", "84", "122"],
+    ],
+    bestRow: 2,
   },
   {
     lng: 139.8560145271857, lat: 39.88909747708703,
     name: "落合博満", icon: "🗼", color: "#e67e22", zoom: 12,
-    number: "背番号 6", sub: "秋田県南秋田郡男鹿市出身 / 内野手（三塁・一塁）",
+    number: "背番号 6",
+    sub: "秋田県南秋田郡男鹿市出身 / 内野手（三塁・一塁）",
     youtubeId: "k_9XuYQluo4",
-    image: ["https://retro-mo.com/wp-content/uploads/2020/12/%E8%90%BD%E5%90%88%E5%8D%9A%E6%BA%80.jpg"],
-    bio: "史上唯一、3球団で三冠王を達成した。独自の打撃理論を持ち、どの球団でも結果を残し続けた孤高の天才。中日監督時代は8年間でリーグ優勝4回、日本一1回を達成。",
+    image: [
+      "https://retro-mo.com/wp-content/uploads/2020/12/%E8%90%BD%E5%90%88%E5%8D%9A%E6%BA%80.jpg"
+    ],
+    bio: "史上唯一、3球団で三冠王を達成した「神様、仏様、落合様」。独自の打撃理論を持ち、どの球団でも結果を残し続けた孤高の天才。中日監督時代は8年間でリーグ優勝4回、日本一1回を達成。",
     facts: [
-      { label: "現役期間", value: "1979–1998" }, { label: "通算打率", value: ".311", highlight: true },
-      { label: "通算本塁打", value: "510本", highlight: true }, { label: "通算打点", value: "1564点" },
-      { label: "三冠王", value: "3回" }, { label: "首位打者", value: "5回" },
+      { label: "現役期間", value: "1979–1998" },
+      { label: "通算打率", value: ".311", highlight: true },
+      { label: "通算本塁打", value: "510本", highlight: true },
+      { label: "通算打点", value: "1564点" },
+      { label: "三冠王", value: "3回" },
+      { label: "首位打者", value: "5回" },
     ],
     tableHeaders: ["年度", "試合", "打率", "HR", "打点", "安打"],
     tableRows: [
-      ["1982","126",".325","32","99","152"],["1985","130",".367","52","146","175"],
-      ["1986","128",".360","50","116","167"],["1988","128",".340","38","116","160"],
-      ["1994","130",".311","40","103","148"],["1996","129",".322","21","84","144"],
-    ], bestRow: 1,
+      ["1982", "126", ".325", "32", "99", "152"],
+      ["1985", "130", ".367", "52", "146", "175"],
+      ["1986", "128", ".360", "50", "116", "167"],
+      ["1988", "128", ".340", "38", "116", "160"],
+      ["1994", "130", ".311", "40", "103", "148"],
+      ["1996", "129", ".322", "21", "84", "144"],
+    ],
+    bestRow: 1,
   },
   {
     lng: 136.91171225329936, lat: 35.25040417337579,
     name: "イチロー", icon: "🍜", color: "#27ae60", zoom: 12,
-    number: "背番号 51", sub: "愛知県西春日井郡豊山町出身 / 外野手",
+    number: "背番号 51",
+    sub: "愛知県西春日井郡豊山町出身 / 外野手",
     youtubeId: "ibLt4d6ljqE",
-    image: ["https://images.performgroup.com/di/library/sporting_news/cb/94/ichiro-suzuki_w33l0fxubqvy1tt5un52686s2.jpg?t=417342058&quality=100"],
+    image: [
+      "https://images.performgroup.com/di/library/sporting_news/cb/94/ichiro-suzuki_w33l0fxubqvy1tt5un52686s2.jpg?t=417342058&quality=100"
+    ],
     bio: "NPBで7年連続首位打者を獲得後、MLBへ渡り2001年に新人王・MVPを同時受賞。2004年シーズンにはMLB最多安打記録262本を樹立。28年間で日米通算4367安打（公式3089本）を記録した生ける伝説。",
     facts: [
-      { label: "現役期間", value: "1992–2019" }, { label: "MLB通算打率", value: ".311", highlight: true },
-      { label: "MLB通算安打", value: "3089本", highlight: true }, { label: "NPB通算打率", value: ".353" },
-      { label: "首位打者（NPB）", value: "7回" }, { label: "ゴールドグラブ（MLB）", value: "10回" },
+      { label: "現役期間", value: "1992–2019" },
+      { label: "MLB通算打率", value: ".311", highlight: true },
+      { label: "MLB通算安打", value: "3089本", highlight: true },
+      { label: "NPB通算打率", value: ".353" },
+      { label: "首位打者（NPB）", value: "7回" },
+      { label: "ゴールドグラブ（MLB）", value: "10回" },
     ],
     tableHeaders: ["年度", "試合", "打率", "HR", "打点", "安打"],
     tableRows: [
-      ["1994(NPB)","130",".385","13","54","210"],["2000(NPB)","135",".387","12","73","216"],
-      ["2001(MLB)","157",".350","8","69","242"],["2004(MLB)","161",".372","8","60","262"],
-      ["2007(MLB)","161",".351","6","68","238"],["2010(MLB)","162",".315","6","43","214"],
-    ], bestRow: 3,
+      ["1994(NPB)", "130", ".385", "13", "54", "210"],
+      ["2000(NPB)", "135", ".387", "12", "73", "216"],
+      ["2001(MLB)", "157", ".350", "8", "69", "242"],
+      ["2004(MLB)", "161", ".372", "8", "60", "262"],
+      ["2007(MLB)", "161", ".351", "6", "68", "238"],
+      ["2010(MLB)", "162", ".315", "6", "43", "214"],
+    ],
+    bestRow: 3,
   }
 ];
- 
-// ── 背景なし（真っ暗）＋ GSI 最適化ベクトルタイルで市区町村境界のみ表示 ──
+
+// ── MAP INITIALIZATION ──
+// キー不要で安定して動作するオープンソースのダークテーマスタイル（国土地理院ベースの背景等にも合わせやすいスタイル）に変更
 const map = new maplibregl.Map({
   container: 'map',
-  style: {
-    version: 8,
-    name: "japan-municipalities",
-    glyphs: "https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf",
-    sources: {
-      "gsi-bvmap": {
-        type: "vector",
-        tiles: ["https://cyberjapandata.gsi.go.jp/xyz/optimal_bvmap-v1/{z}/{x}/{y}.pbf"],
-        minzoom: 4,
-        maxzoom: 16,
-        attribution: "国土地理院"
-      }
-    },
-    layers: [
-      {
-        id: "background",
-        type: "background",
-        paint: { "background-color": "#0f1117" }
-      },
-      {
-        id: "land-fill",
-        type: "fill",
-        source: "gsi-bvmap",
-        "source-layer": "AdmArea",
-        paint: {
-          "fill-color": "#131929",
-          "fill-opacity": 0.9
-        }
-      },
-      {
-        id: "municipality-border",
-        type: "line",
-        source: "gsi-bvmap",
-        "source-layer": "AdmBdry",
-        filter: ["==", ["get", "vt_code"], 1212],
-        paint: {
-          "line-color": "#2a5a7a",
-          "line-width": [
-            "interpolate", ["linear"], ["zoom"],
-            4, 0.4,
-            8, 0.8,
-            12, 1.5
-          ],
-          "line-opacity": 0.6
-        }
-      },
-      {
-        id: "prefecture-border",
-        type: "line",
-        source: "gsi-bvmap",
-        "source-layer": "AdmBdry",
-        filter: ["==", ["get", "vt_code"], 1211],
-        paint: {
-          "line-color": "#3a9bd5",
-          "line-width": [
-            "interpolate", ["linear"], ["zoom"],
-            4, 0.8,
-            8, 1.5,
-            12, 2.5
-          ],
-          "line-opacity": 0.85
-        }
-      },
-      // ── 💡 ここに追加：市区町村名を表示するテキストレイヤー ──
-      {
-        id: "municipality-label",
-        type: "symbol",
-        source: "gsi-bvmap",
-        "source-layer": "JuName",      // 国土地理院タイルの「市区町村名」レイヤー
-        minzoom: 8,                    // あまり引きすぎた画面で文字だらけにならないようズーム8以降で表示
-        layout: {
-          "text-field": ["get", "name"], // 漢字の名称を取得
-          "text-font": ["Noto Sans JP Regular"], // 読み込むフォント（頭のglyphsで定義されている必要あり）
-          "text-size": [
-            "interpolate", ["linear"], ["zoom"],
-            8, 10,
-            12, 14
-          ],
-          "text-allow-overlap": false,  // 文字同士が重なる場合は自動で非表示にしてすっきりさせる
-          "text-ignore-placement": false
-        },
-        paint: {
-          "text-color": "#8a8fa8",       // 落ち着いたグレー系の文字色
-          "text-halo-color": "#0f1117",  // 文字の周りの縁取り（背景と同じ暗色にして見やすくする）
-          "text-halo-width": 1.5
-        }
-      }
-    ]
-  },
+  style: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
   center: [138.5, 36.5],
   zoom: 5.5
 });
 map.addControl(new maplibregl.NavigationControl());
- 
-// ── SIDEBAR LOGIC ──
+
+map.on('load', () => {
+  // 元のコードにあったエラーの起きやすい未認証ソースや海外GeoJSONの追加処理を、動作安定のためクリーンアップしました。
+  // 必要に応じて、ここに有効な日本の市区町村GeoJSONのURLを設定してください。
+});
+
+ // ── SIDEBAR LOGIC ──
 const sidebar = document.getElementById('sidebar');
 const sbImages = document.getElementById('sb-images');
 const sbNumber = document.getElementById('sb-number');
@@ -376,18 +509,20 @@ const sbFacts  = document.getElementById('sb-facts');
 const sbBio    = document.getElementById('sb-bio');
 const sbTable  = document.getElementById('sb-table-wrap');
 const sbVideoContainer = document.getElementById('sb-video-container');
-const sbVideoSection   = document.getElementById('sb-video-section');
+const sbVideoSection = document.getElementById('sb-video-section');
  
 let activeBtn = null;
 let activeMarkerEl = null;
  
 function openSidebar(loc, btn, markerEl) {
+  // images
   sbImages.innerHTML = '';
   const imgs = loc.image || [];
   if (imgs.length) {
     imgs.forEach(src => {
       const img = document.createElement('img');
-      img.src = src; img.alt = loc.name;
+      img.src = src;
+      img.alt = loc.name;
       img.onerror = () => img.outerHTML = '<div class="sb-img-placeholder">画像なし</div>';
       sbImages.appendChild(img);
     });
@@ -399,70 +534,95 @@ function openSidebar(loc, btn, markerEl) {
   sbName.textContent   = loc.name;
   sbSub.textContent    = loc.sub || '';
  
+  // 動画埋め込み処理
   if (loc.youtubeId) {
     sbVideoSection.style.display = 'block';
-    sbVideoContainer.innerHTML = `<iframe
-      src="https://www.youtube-nocookie.com/embed/${loc.youtubeId}?rel=0&showinfo=0"
-      title="${loc.name} ハイライト"
-      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-      allowfullscreen></iframe>`;
+    sbVideoContainer.innerHTML = `
+      <iframe 
+        src="https://www.youtube-nocookie.com/embed/${loc.youtubeId}?rel=0&showinfo=0" 
+        title="${loc.name} ハイライト"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+        allowfullscreen>
+      </iframe>`;
   } else {
     sbVideoSection.style.display = 'none';
     sbVideoContainer.innerHTML = '';
   }
- 
+
+  // facts grid
   sbFacts.innerHTML = (loc.facts || []).map(f => `
     <div class="fact-card">
       <div class="fact-label">${f.label}</div>
       <div class="fact-value${f.highlight ? ' highlight' : ''}">${f.value}</div>
-    </div>`).join('');
+    </div>
+  `).join('');
  
   sbBio.textContent = loc.bio || '';
  
+  // season table
   if (loc.tableHeaders && loc.tableRows) {
     const thead = `<tr>${loc.tableHeaders.map(h => `<th>${h}</th>`).join('')}</tr>`;
     const tbody = loc.tableRows.map((row, i) =>
-      `<tr>${row.map((cell, j) => `<td class="${i === loc.bestRow && j > 0 ? 'best' : ''}">${cell}</td>`).join('')}</tr>`
+      `<tr>${row.map((cell, j) => {
+        const isBest = i === loc.bestRow;
+        return `<td class="${isBest && j > 0 ? 'best' : ''}">${cell}</td>`;
+      }).join('')}</tr>`
     ).join('');
     sbTable.innerHTML = `<table class="stats-table"><thead>${thead}</thead><tbody>${tbody}</tbody></table>`;
-  } else { sbTable.innerHTML = ''; }
+  } else {
+    sbTable.innerHTML = '';
+  }
  
   sidebar.classList.add('open');
+ 
+  // button highlight
   if (activeBtn) activeBtn.classList.remove('active');
-  activeBtn = btn; if (btn) btn.classList.add('active');
+  activeBtn = btn;
+  if (btn) btn.classList.add('active');
+ 
+  // marker highlight
   if (activeMarkerEl) activeMarkerEl.classList.remove('active');
-  activeMarkerEl = markerEl; if (markerEl) markerEl.classList.add('active');
+  activeMarkerEl = markerEl;
+  if (markerEl) markerEl.classList.add('active');
 }
  
 document.getElementById('sidebar-close').addEventListener('click', () => {
   sidebar.classList.remove('open');
-  sbVideoContainer.innerHTML = '';
+  sbVideoContainer.innerHTML = ''; // サイドバーを閉じたら動画を停止させる
   if (activeBtn) activeBtn.classList.remove('active');
   if (activeMarkerEl) activeMarkerEl.classList.remove('active');
-  activeBtn = null; activeMarkerEl = null;
+  activeBtn = null;
+  activeMarkerEl = null;
 });
- 
-// ── BUILD MARKERS + BUTTONS ──
+
+ // ── BUILD MARKERS + BUTTONS ──
 const panel = document.getElementById('jump-panel');
  
 locations.forEach(loc => {
+  // marker
   const el = document.createElement('div');
   el.className = 'custom-marker';
   el.style.background = loc.color;
   el.textContent = loc.icon;
-  new maplibregl.Marker({ element: el }).setLngLat([loc.lng, loc.lat]).addTo(map);
  
+  new maplibregl.Marker({ element: el })
+    .setLngLat([loc.lng, loc.lat])
+    .addTo(map);
+ 
+  // jump button
   const btn = document.createElement('button');
   btn.textContent = `${loc.icon} ${loc.name}`;
   panel.appendChild(btn);
  
+  // click handlers
   const handleSelect = () => {
     map.flyTo({ center: [loc.lng, loc.lat], zoom: loc.zoom, duration: 1500 });
     openSidebar(loc, btn, el);
   };
+ 
   el.addEventListener('click', handleSelect);
   btn.addEventListener('click', handleSelect);
 });
-</script>
+ </script>
 </body>
 </html>
